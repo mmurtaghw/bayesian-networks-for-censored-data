@@ -20,25 +20,32 @@ calcV <- function(input, eventTime, censorTime, tau){
     if (min(tau,eventTime[i]) >  censorTime[i]){
       v = 0
     }
-  
+    
     vArray = append(v,vArray)
   }
   return(vArray)
 }
 
-v <- with(myeloid, calcV(myeloid, txtime, futime, 200))
-##First lets take a look at the data on a survival plot, with our event as a death.
 
-surv_object <- Surv(time = myeloid$futime, event = myeloid$death)
+inverseWeights <- function(input, eventTime, censorTime, tau,isTreatment, isCensored){
+  
+  v <- calcV(input, eventTime, censorTime, tau)
+  
+  surv_object <- Surv(time = censorTime, event = isCensored)
+  
+  fit1 <- survfit(surv_object ~ isTreatment, data = input, type="kaplan-meier")
+  
+  suma = summary(fit1, times = v)
+  
+  out <-  data.frame(suma[6])
+  
+  input_N <- cbind(input,out)
+  input_N <- cbind(input_N, v)  
+  
+  input_N <- input_N %>%
+    mutate(weights = ifelse(v != 0,(1/surv), 0))
+  
+  return(input_N)
+}
 
-fit1 <- survfit(surv_object ~ trt, data = myeloid, type="kaplan-meier")
-
-suma = summary(fit1, times = v)
-
-out <-  data.frame(suma[6])
-
-myeloid_N <- cbind(myeloid,out)
-myeloid_N <- cbind(myeloid_N, v)
-
-myeloid_N <- myeloid_N %>%
-  mutate(weights = ifelse(v != 0,(1/surv), 0))
+x <- with(myeloid,(inverseWeights(myeloid, txtime,futime,200, trt, death)))
