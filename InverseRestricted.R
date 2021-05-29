@@ -53,15 +53,18 @@ x <- with(myeloid,(inverseWeights(myeloid, txtime,futime,200, trt, death)))
 x <- x %>% select(sex, futime,txtime,crtime,rltime,weights) #%>%  mutate(trt = ifelse(trt == "A",0,1))
 x$sex <- as.numeric(x$sex)
 
+datatemp <- myeloid
+
 asia <- asia()
 child <- child()
 
 headers <- names(x)
 discreteness_vals <- c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE)
-first_try <- BNDataset(x, discreteness_vals, headers)
+first_try <- BNDataset(x, discreteness_vals, headers,c(2,50,50,20,50,200) )
 first_try_imputed <- impute(first_try)
 imputed_data <- imputed.data(first_try_imputed)
 imputed_data_df = data.frame(imputed_data)
 second_try <- BNDataset(imputed_data_df, discreteness_vals, headers, c(2,1,1,1,1,1))
 
 net <- learn.network(second_try, algo="sem")
+

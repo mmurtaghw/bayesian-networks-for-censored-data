@@ -3,6 +3,12 @@ library(survminer)
 library(dplyr)
 library(condSURV)
 library(bnstruct)
+install.library("Rgraphviz")
+library("Rgraphviz")
+install.packages("qgraph")
+library("qgraph")
+
+
 
 #Using the myeloid Lukemia data built into R
 
@@ -55,16 +61,27 @@ x$sex <- as.numeric(x$sex)
 
 asia <- asia()
 child <- child()
-
+weights <- x$weights
+x <- x[,-c(3, 5, 6,7,8) ]
 headers <- names(x)
-discreteness_vals <- c(TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE)
+discreteness_vals <- c(TRUE, TRUE, TRUE)
 first_try <- BNDataset(x, discreteness_vals, headers)
 first_try_imputed <- impute(first_try)
 imputed_data <- imputed.data(first_try_imputed)
 imputed_data_df = data.frame(imputed_data)
 print("hi")
-second_try <- BNDataset(imputed_data_df, discreteness_vals, headers, c(2,2,20,2,20,20,20,20))
+second_try <- BNDataset(imputed_data_df, discreteness_vals, headers, c(2,2,2))
 print("hi")
 
 net <- learn.network(second_try, algo="sem")
 
+plot(
+  net,
+  method = "default",
+  use.node.names = TRUE,
+  frac = 0.2,
+  max.weight = max(dag(net)),
+  node.size.lab = 14,
+  node.col = rep("white", num.nodes(net)),
+  plot.wpdag = FALSE,
+)
