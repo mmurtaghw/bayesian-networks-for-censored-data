@@ -4,9 +4,6 @@ library(dplyr)
 library(condSURV)
 library(bnstruct)
 
-
-
-
 #Using the myeloid Lukemia data built into R
 
 glimpse(myeloid)
@@ -55,21 +52,17 @@ inverseWeights <- function(input, eventTime, censorTime, tau,isTreatment, isCens
 x <- with(myeloid,(inverseWeights(myeloid, txtime,futime,200, trt, death)))
 x <- x %>% select(trt, sex, futime, death,txtime,crtime,rltime,weights) %>%  mutate(trt = ifelse(trt == "A",1,2)) %>% mutate (death = ifelse(death == 1, 2, 1))
 x$sex <- as.numeric(x$sex)
-x$trt <- as.numeric(x$trt)
 
-weights <- x$weights
-x <- x[,-c(3, 5, 6,7,8) ]
+weights <- x$weights +1
 x$trt <- weights*x$trt
 x$sex <- weights*x$sex
-headers <- names(x)
-discreteness_vals <- c(FALSE, FALSE, TRUE)
-first_try <- BNDataset(x, discreteness_vals, headers)
-first_try_imputed <- impute(first_try)
-imputed_data <- imputed.data(first_try_imputed)
-imputed_data_df = data.frame(imputed_data)
-print("hi")
-second_try <- BNDataset(imputed_data_df, discreteness_vals, headers, c(2,2,2))
-print("hi")
+x <- x[,-c(3, 5, 6, 7, 8) ]
 
+x <- x[c('sex', 'death','trt')]
+
+headers <- names(x)
+discreteness_vals <- c(FALSE,TRUE, FALSE)
+second_try <- BNDataset(x, discreteness_vals, headers, c(100,2,100))
 net <- learn.network(second_try, algo="sem")
+plot(net)
 
