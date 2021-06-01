@@ -52,7 +52,7 @@ inverseWeights <- function(input, eventTime, censorTime, tau,isTreatment, isCens
 x <- with(myeloid,(inverseWeights(myeloid, txtime,futime,200, trt, death)))
 x <- x %>% select(trt, sex, futime, death,txtime,crtime,rltime,weights) %>%  mutate(trt = ifelse(trt == "A",1,2)) %>% mutate (death = ifelse(death == 1, 2, 1))
 x$sex <- as.numeric(x$sex)
-
+write.csv(x,"bndata.csv")
 
 headers <- names(x)
 discreteness_vals <- c(TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE)
