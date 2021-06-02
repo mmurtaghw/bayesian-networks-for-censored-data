@@ -52,7 +52,3 @@ myeloid_T <- rbind(myeloid_T, filterSplitPos)
 
 ##Bayesian Network goes here
 
-myeloid_T
-
-
-

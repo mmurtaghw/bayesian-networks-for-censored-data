@@ -7,6 +7,7 @@ library(bnstruct)
 #Using the myeloid Lukemia data built into R
 
 glimpse(myeloid)
+data <- jasa
 
 
 calcV <- function(input, eventTime, censorTime, tau){
@@ -28,13 +29,13 @@ calcV <- function(input, eventTime, censorTime, tau){
 }
 
 
-inverseWeights <- function(input, eventTime, censorTime, tau,isTreatment, isCensored){
+inverseWeights <- function(input, eventTime, censorTime, tau, isCensored){
   
   v <- calcV(input, eventTime, censorTime, tau)
   
   surv_object <- Surv(time = censorTime, event = isCensored)
   
-  fit1 <- survfit(surv_object ~ isTreatment, data = input, type="kaplan-meier")
+  fit1 <- survfit(surv_object ~ isCensored, data = input, type="kaplan-meier")
   
   suma = summary(fit1, times = v)
   
@@ -49,13 +50,12 @@ inverseWeights <- function(input, eventTime, censorTime, tau,isTreatment, isCens
   return(input_N)
 }
 
-x <- with(myeloid,(inverseWeights(myeloid, txtime,futime,200, trt, death)))
+
+x <- with(data,(inverseWeights(data, transplant,futime,600, fustat)))
 x <- x %>% select(trt, sex, futime, death,txtime,crtime,rltime,weights) %>%  mutate(trt = ifelse(trt == "A",1,2)) %>% mutate (death = ifelse(death == 1, 2, 1))
 x$sex <- as.numeric(x$sex)
 
-asia <- asia()
-child <- child()
-
+x
 headers <- names(x)
 discreteness_vals <- c(TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE)
 first_try <- BNDataset(x, discreteness_vals, headers)
