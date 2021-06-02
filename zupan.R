@@ -9,26 +9,26 @@ glimpse(myeloid)
 
 ##First lets take a look at the data on a survival plot, with our event as a death.
 
-surv_object <- Surv(time = myeloid$futime, event = myeloid$death)
+surv_object <- Surv(time = jasa$futime, event = jasa$fustat)
 
-fit1 <- survfit(surv_object ~ trt, data = myeloid, type="kaplan-meier")
-ggsurvplot(fit1, data = myeloid, pval = TRUE)
+fit1 <- survfit(surv_object ~ transplant, data = jasa, type="kaplan-meier")
+ggsurvplot(fit1, data = jasa, pval = TRUE)
 
 #Now lets define an arbitrary T* that's the interval between 285 and 1200
 #As per the paper, let's define any censored observation above this as a death, ie a failed outcome 0
 
 
-myeloid_T <- myeloid %>%
-  mutate(Tstar = ifelse(futime >= 285 & futime <= 1200 & death == 0,1,0)) %>%
-  mutate(outcome = ifelse(futime >= 1200 & death == 0, 0, NA)) %>%
+jasa_T <- jasa %>%
+  mutate(Tstar = ifelse(futime >= 285 & futime <= 1200 & fustat == 0,1,0)) %>%
+  mutate(outcome = ifelse(futime >= 1200 & fustat == 0, 0, NA)) %>%
   mutate(outcome = ifelse(Tstar, 1, outcome)) %>%
-  mutate(outcome = ifelse(death == 1, 0, outcome))
+  mutate(outcome = ifelse(fustat == 1, 0, outcome))
 
-filterSplit <- myeloid_T %>%
+filterSplit <- jasa_T %>%
   filter(futime <= 285) 
 
-myeloid_T <- myeloid_T %>%
-  filter(futime > 285 | futime < 285 & death == 1) %>%
+jasa_T <- jasa_T %>%
+  filter(futime > 285 | futime < 285 & fustat == 1) %>%
   mutate(KMW = 1)
 
 filterSplitPos <- filterSplit %>%
@@ -37,7 +37,7 @@ filterSplitPos <- filterSplit %>%
 filterSplitNeg <- filterSplit %>%
   mutate(outcome = 0)
 
-KMW <- with(filterSplit, KMW(futime,death))
+KMW <- with(filterSplit, KMW(futime,fustat))
 
 filterSplitNeg <- cbind(filterSplitNeg,KMW)
 
@@ -46,9 +46,9 @@ KMW <- 1 - KMW
 filterSplitPos <- cbind(filterSplitPos,KMW)
 
 
-myeloid_T <- rbind(myeloid_T, filterSplitNeg)
+jasa_T <- rbind(jasa_T, filterSplitNeg)
 
-myeloid_T <- rbind(myeloid_T, filterSplitPos)
+jasa_T <- rbind(jasa_T, filterSplitPos)
 
 ##Bayesian Network goes here
 
