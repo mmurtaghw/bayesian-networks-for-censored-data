@@ -50,5 +50,7 @@ jasa_T <- rbind(jasa_T, filterSplitNeg)
 
 jasa_T <- rbind(jasa_T, filterSplitPos)
 
+write.csv(jasa_T,"zupandata.csv")
+
 ##Bayesian Network goes here
 
