@@ -51,7 +51,7 @@ inverseWeights <- function(input, eventTime, censorTime, tau, isCensored){
 }
 
 
-x <- with(data,(inverseWeights(data, transplant,futime, 750, fustat)))
+x <- with(data,(inverseWeights(data, transplant,futime, 500, fustat)))
 write.csv(x,"bndata.csv")
 
 
