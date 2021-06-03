@@ -51,13 +51,16 @@ inverseWeights <- function(input, eventTime, censorTime, tau, isCensored){
 }
 
 
-x <- with(data,(inverseWeights(data, transplant,futime,600, fustat)))
+x <- with(data,(inverseWeights(data, transplant,futime, 750, fustat)))
+write.csv(x,"bndata.csv")
+
 
 ########Select whatever variables you want after the weights are produced from here
 
 x <- x %>% select(trt, sex, futime, death,txtime,crtime,rltime,weights) %>%  mutate(trt = ifelse(trt == "A",1,2)) %>% mutate (death = ifelse(death == 1, 2, 1))
 x$sex <- as.numeric(x$sex)
 x
+
 write.csv(x,"bndata.csv")
 
 headers <- names(x)
