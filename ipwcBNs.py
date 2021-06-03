@@ -7,33 +7,41 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import KBinsDiscretizer
-from feature_engine.discretisation import EqualFrequencyDiscretiser
+from feature_engine.discretisation import EqualWidthDiscretiser
+import sklearn.metrics as metrics
+from sklearn.metrics import classification_report
 
 
-
-invert_predictions = False
-paramLearnWeights = False
+paramLearnWeights = True
+structure_learning_with_weights = False
 dependent_variable = "fustat"
-factors_to_use = ["fustat",  "transplant", "reject", "surv"]
+factors_to_use = ["fustat", "surgery", "transplant", "surv","hla.a2", "reject", "new_binned_age", "v"]
 
 data_file =pd.read_csv('bndata_inverse.csv')
 
+for index, row in data_file.iterrows():
+    data_file['birth.dt'][index] = int(row['birth.dt'][-2] + row['birth.dt'][-1])
 
 
 for index, row in data_file.iterrows():
-    data_file['birth.dt'][index] = (row['birth.dt'][-2] + row['birth.dt'][-1])
     data_file['age'][index] = int(row['age'])
 
-disc = EqualFrequencyDiscretiser(q=10, variables=['age'])
+disc = EqualWidthDiscretiser(bins=8, variables=['age'])
 disc.fit(data_file)
 new_binned_age_data = disc.transform(data_file)
+
+# disc = EqualFrequencyDiscretiser(q=10, variables=['birth.dt'])
+# disc.fit(data_file)
+# new_binned_birthdt = disc.transform(data_file)
+
+
 
 data_file['new_binned_age'] = 'e'
 data_file['new_binned_age'] = new_binned_age_data['age']
 
 
 newdata = data_file[factors_to_use + ["weights"]]
-train, test, y_train, y_test = train_test_split(newdata, newdata, test_size=.90, random_state = 20)
+train, test, y_train, y_test = train_test_split(newdata, newdata, test_size=.80, random_state = 20)
 
 weights = train[["weights"]].to_numpy()
 weights = np.reshape(weights, (np.product(weights.shape),))
@@ -51,8 +59,11 @@ print("The shape of test is ",test.shape)
 
 print("The shape of weights is", weights.shape)
 
+if structure_learning_with_weights == False:
+    model = BayesianNetwork.from_samples(train)
+else:
+    model = BayesianNetwork.from_samples(train, weights=weights)
 
-model = BayesianNetwork.from_samples(train, weights=weights)
 if paramLearnWeights == True:
     print("Parameter is learning is taking place but with weights this time")
     model.fit(train, weights=weights, n_jobs = 1)
@@ -71,30 +82,29 @@ k = np.shape(res)
 
 for i in range(k[0]):
     predict.append(res[i][position_of_dependent_variable])
-predict = np.array(predict).reshape(k[0],1)
-
-if invert_predictions == True:
-    for index, prediction in enumerate(predict): 
-        if prediction == 0:
-            predict[index] = 1
-        else:
-            predict[index] =0
+predicted = np.array(predict).reshape(k[0],1)
 
 
 
-acc = accuracy_score(predict, test_y)
-confusionMTRX = confusion_matrix(test_y,predict)
-print(acc)
-print(confusionMTRX)
 
+
+acc = accuracy_score(predicted, test_y)
+confusionMTRX = confusion_matrix(test_y,predicted)
+f1_score =   classification_report(predicted, test_y)
+
+
+if paramLearnWeights == True or structure_learning_with_weights == True:
+    print("\n These results were acquired using censored weights during the training of the bayesian network\n") 
+    print("The accuracy of the model trained  using weights is \n",acc)
+    print("\n The confusion matrix of the model trained  using weights is  \n",confusionMTRX)
+    print("\n Other Classification metrics of the model trained  using weights is \n", f1_score)
+
+else:
+    print("\n No censored weights were used while training the bayesian network\n") 
+    print("The accuracy of the model trained without using weights is \n",acc)
+    print("\n The confusion matrix of the model trained without using weights is  \n",confusionMTRX)
+    print("\n Other Classification metrics of the model trained without using weights is \n", f1_score)
 
 
 model.plot()
 plt.savefig('inverse_bn.png')
-
-
-
-# print(model.score(data_file[["trt","sex", "death"]].to_numpy(), data_file[["rltime"]].to_numpy()))
-
-
-
